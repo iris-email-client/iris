@@ -1,11 +1,11 @@
 package br.unb.cic.iris.security;
 
+import static br.unb.cic.iris.security.KeystoreManager.DEFAULT_KEYSTORE_ALIAS;
+import static br.unb.cic.iris.security.KeystoreManager.PROVIDER;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
-import java.security.KeyStore;
 import java.security.PrivateKey;
-import java.security.Security;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -31,13 +31,12 @@ import org.bouncycastle.cms.CMSAlgorithm;
 import org.bouncycastle.cms.jcajce.JcaSimpleSignerInfoGeneratorBuilder;
 import org.bouncycastle.cms.jcajce.JceCMSContentEncryptorBuilder;
 import org.bouncycastle.cms.jcajce.JceKeyTransRecipientInfoGenerator;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.mail.smime.SMIMEEnvelopedGenerator;
 import org.bouncycastle.mail.smime.SMIMESignedGenerator;
 import org.bouncycastle.util.Store;
 import org.bouncycastle.util.Strings;
 
-/*
+/* Procedimento para criar o keystore na mao, caso necessario
  * https://www.sslshopper.com/article-most-common-java-keytool-keystore-commands.html
  * 
  * to generate keystore and key pair (inside USER_HOME/.iris/):
@@ -49,39 +48,48 @@ import org.bouncycastle.util.Strings;
  * keytool -list -keystore iris_keystore.pfx -storetype pkcs12
  */
 public class EmailSenderSmime extends EmailSender {
-	private static final String PROVIDER = "BC";
-	private static final String TYPE = "PKCS12";
-	String pkcs12Keystore = System.getProperty("user.home")+"/.iris/iris_keystore.pfx";
-	String password = "123456";
-	String keyAlias = "iris";
+	private KeystoreManager manager;
 
-	protected MimeMessage createMessage(String to, String subject, String text) throws Exception {
-		System.out.println("Creating message to: " + to);
+	//TODO temporario ... tem q pegar o email do usr q esta usando a app (enviando email)
+	String keyAlias = DEFAULT_KEYSTORE_ALIAS;
+
+	public EmailSenderSmime() {
+		manager = new KeystoreManager();
+
 		MailcapCommandMap mailcap = (MailcapCommandMap) CommandMap.getDefaultCommandMap();
-
 		mailcap.addMailcap("application/pkcs7-signature;; x-java-content-handler=org.bouncycastle.mail.smime.handlers.pkcs7_signature");
 		mailcap.addMailcap("application/pkcs7-mime;; x-java-content-handler=org.bouncycastle.mail.smime.handlers.pkcs7_mime");
 		mailcap.addMailcap("application/x-pkcs7-signature;; x-java-content-handler=org.bouncycastle.mail.smime.handlers.x_pkcs7_signature");
 		mailcap.addMailcap("application/x-pkcs7-mime;; x-java-content-handler=org.bouncycastle.mail.smime.handlers.x_pkcs7_mime");
 		mailcap.addMailcap("multipart/signed;; x-java-content-handler=org.bouncycastle.mail.smime.handlers.multipart_signed");
-
 		CommandMap.setDefaultCommandMap(mailcap);
+	}
 
-		/* Add BC */
-		Security.addProvider(new BouncyCastleProvider());
+	@Override
+	protected MimeMessage createMessage(String to, String subject, String text) throws Exception {
+		System.out.println("Creating encryted message to: " + to);
 
-		/* Open the keystore */
-		KeyStore keystore = KeyStore.getInstance(TYPE, PROVIDER);
-		keystore.load(new FileInputStream(pkcs12Keystore), password.toCharArray());
-		Certificate[] chain = keystore.getCertificateChain(keyAlias);
+		/* get certificate chain */
+		//TODO pegar o keyalias certo ... do usr q esta usando a app
+		Certificate[] chain = manager.getCertificateChain(keyAlias);
 
-		/* Get the private key to sign the message with */
-		PrivateKey privateKey = (PrivateKey) keystore.getKey(keyAlias, password.toCharArray());
-		if (privateKey == null) {
-			throw new Exception("cannot find private key for alias: " + keyAlias);
-		}
-
+		/* Create a simple message, containing the body (the message itself) */
 		MimeMessage body = super.createMessage(to, subject, text);
+
+		/* Sign the message */
+		MimeMessage signedMessage = signMessage(body, chain, body.getAllHeaderLines());
+
+		/* Encrypt the message */
+		MimeMessage encryptedMessage = encryptMessage(signedMessage, chain, body.getAllHeaderLines());
+
+		/* return message ready to be sent */
+		return encryptedMessage;
+	}
+
+	private MimeMessage signMessage(MimeMessage body, Certificate[] chain, Enumeration headers) throws Exception {
+		System.out.println("Signing message ...");
+		/* Get the private key to sign the message with */
+		PrivateKey privateKey = manager.getPrivateKey(keyAlias);
 
 		/* Create the SMIMESignedGenerator */
 		SMIMECapabilityVector capabilities = new SMIMECapabilityVector();
@@ -90,8 +98,7 @@ public class EmailSenderSmime extends EmailSender {
 		capabilities.addCapability(SMIMECapability.dES_CBC);
 
 		ASN1EncodableVector attributes = new ASN1EncodableVector();
-		attributes.add(new SMIMEEncryptionKeyPreferenceAttribute(
-				new IssuerAndSerialNumber(new X500Name(((X509Certificate) chain[0]).getIssuerDN().getName()),
+		attributes.add(new SMIMEEncryptionKeyPreferenceAttribute(new IssuerAndSerialNumber(new X500Name(((X509Certificate) chain[0]).getIssuerDN().getName()),
 				((X509Certificate) chain[0]).getSerialNumber())));
 		attributes.add(new SMIMECapabilitiesAttribute(capabilities));
 
@@ -110,7 +117,6 @@ public class EmailSenderSmime extends EmailSender {
 		MimeMessage signedMessage = new MimeMessage(getSession());
 
 		/* Set all original MIME headers in the signed message */
-		Enumeration headers = body.getAllHeaderLines();
 		while (headers.hasMoreElements()) {
 			signedMessage.addHeaderLine((String) headers.nextElement());
 		}
@@ -119,12 +125,17 @@ public class EmailSenderSmime extends EmailSender {
 		signedMessage.setContent(mm);
 		signedMessage.saveChanges();
 
+		return signedMessage;
+	}
+
+	private MimeMessage encryptMessage(MimeMessage message, Certificate[] chain, Enumeration headers) throws Exception {
+		System.out.println("Encrypting message ...");
 		/* Create the encrypter */
 		SMIMEEnvelopedGenerator encrypter = new SMIMEEnvelopedGenerator();
 		encrypter.addRecipientInfoGenerator(new JceKeyTransRecipientInfoGenerator((X509Certificate) chain[0]).setProvider(PROVIDER));
 
 		/* Encrypt the message */
-		MimeBodyPart encryptedPart = encrypter.generate(signedMessage, new JceCMSContentEncryptorBuilder(CMSAlgorithm.RC2_CBC).setProvider(PROVIDER).build());
+		MimeBodyPart encryptedPart = encrypter.generate(message, new JceCMSContentEncryptorBuilder(CMSAlgorithm.RC2_CBC).setProvider(PROVIDER).build());
 
 		/*
 		 * Create a new MimeMessage that contains the encrypted and signed content
@@ -135,7 +146,6 @@ public class EmailSenderSmime extends EmailSender {
 		MimeMessage encryptedMessage = new MimeMessage(getSession(), new ByteArrayInputStream(out.toByteArray()));
 
 		/* Set all original MIME headers in the encrypted message */
-		headers = body.getAllHeaderLines();
 		while (headers.hasMoreElements()) {
 			String headerLine = (String) headers.nextElement();
 			/*
@@ -147,18 +157,6 @@ public class EmailSenderSmime extends EmailSender {
 		}
 
 		return encryptedMessage;
-	}
-
-	public static void main(String[] args) {
-		EmailSender sender = new EmailSenderSmime();
-		String to = "XXX@gmail.com";
-		String subject = "teste encriptado e assinado";
-		String body = "teste 123";
-		try {
-			sender.sendMessage(to, subject, body);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
 	}
 	
 }

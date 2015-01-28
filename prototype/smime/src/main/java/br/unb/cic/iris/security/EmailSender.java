@@ -1,5 +1,8 @@
 package br.unb.cic.iris.security;
 
+import static br.unb.cic.iris.security.MainApp.*;
+import static br.unb.cic.iris.security.MainApp.username;
+
 import java.util.Properties;
 
 import javax.mail.Message;
@@ -11,8 +14,6 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
 public class EmailSender {
-	final String username = "XXX@gmail.com";
-	final String password = "XXX";
 	final String smtpServer = "smtp.gmail.com";
 	final int smtpPort = 587;
 
@@ -39,7 +40,7 @@ public class EmailSender {
 		props.put("mail.smtp.auth", "true");
 		props.put("mail.smtp.starttls.enable", "true");
 		props.put("mail.smtp.host", smtpServer);
-		props.put("mail.smtp.port", smtpPort+"");
+		props.put("mail.smtp.port", smtpPort);
 		System.out.println("PROPERTIES: "+props.toString());
 		return props;
 	}
@@ -59,18 +60,6 @@ public class EmailSender {
 		System.out.println("Sending message ...");
 		Transport.send(message);
 		System.out.println("Message sent!");
-	}
-	
-	public static void main(String[] args) {
-		EmailSender sender = new EmailSender();
-		String to = "XXX@gmail.com";
-		String subject = "teste simples";
-		String body = "teste 123";
-		try {
-			sender.sendMessage(to, subject, body);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
 	}
 
 }
