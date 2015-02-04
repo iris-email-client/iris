@@ -3,10 +3,8 @@ package br.unb.cic.iris.security;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.math.BigInteger;
 import java.nio.charset.Charset;
 import java.security.Key;
 import java.security.KeyPair;
@@ -16,34 +14,38 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.Security;
 import java.security.cert.Certificate;
-import java.security.cert.X509Certificate;
-import java.util.Calendar;
-import java.util.Random;
 
-import org.bouncycastle.asn1.x509.X509Name;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.x509.X509V3CertificateGenerator;
 
 public class KeystoreManager {
 	public static final String ENCODING = "UTF-8";
-	private static final String DEFAULT_KEYSTORE_FILE = System.getProperty("user.home") + "/.iris/iris_keystore_novo.pfx";
-	private static final String DEFAULT_KEYSTORE_PASSWORD = "123456";
-	public static final String DEFAULT_KEYSTORE_ALIAS = "iris";
-	private static final String DEFAULT_KEYSTORE_TYPE = "PKCS12";
-	private static final String DEFAULT_DN_SUFIX = ", OU=CIC, O=Universidade de Brasilia, L=Brasilia, ST=DF, C=BR";
-	private static final String DEFAULT_DN = "CN=Iris"+DEFAULT_DN_SUFIX;
-	private static final String ASYMMETRIC_ALGORITHM = "RSA";
-	public static final String PROVIDER = "BC";
-	private static final int KEY_SIZE = 1024;
+	public static final String DEFAULT_DN_SUFIX = ", OU=CIC, O=Universidade de Brasilia, L=Brasilia, ST=DF, C=BR";
 	
+	public static final String KEYSTORE_FILE = System.getProperty("user.home") + "/.iris/iris_keystore.pfx";
+	public static final String KEYSTORE_PASSWORD = "123456";
+	public static final String KEYSTORE_TYPE = "PKCS12";
+	
+	//funciona como CA ... vai assinar os certificados emitidos pelo iris
+	public static final String ROOT_ALIAS = "iris";
+	public static final String ROOT_DN = "CN="+ROOT_ALIAS+DEFAULT_DN_SUFIX;
+	
+	public static final String ASYMMETRIC_ALGORITHM = "RSA";
+	public static final String PROVIDER = "BC";
+	public static final int KEY_SIZE = 1024;
+	
+	private static final KeystoreManager instance = new KeystoreManager();
 	
 	KeyStore keystore;
 
-	static{
-		/* Add BC */
+	
+	private KeystoreManager(){
+		/* Add BC provider */
 		Security.addProvider(new BouncyCastleProvider());
 	}
 	
+	public static KeystoreManager instance(){
+		return instance;
+	}
 	
 	public void exportCertificate(String alias, File certificateOutFile) throws Exception {
 		KeyStore keystore = getKeystore();
@@ -65,7 +67,7 @@ public class KeystoreManager {
 	public KeyPair retrieveKeyPair(String alias) throws Exception {
 		KeyStore keystore = getKeystore();
 
-		Key key = keystore.getKey(alias, DEFAULT_KEYSTORE_PASSWORD.toCharArray());
+		Key key = keystore.getKey(alias, KEYSTORE_PASSWORD.toCharArray());
 		if (key instanceof PrivateKey) {
 			// Get certificate of public key
 			Certificate cert = keystore.getCertificate(alias);
@@ -84,28 +86,34 @@ public class KeystoreManager {
 	
 	public PrivateKey getPrivateKey(String keyAlias) throws Exception {
 		//System.out.println("private key of: "+keyAlias);
-		PrivateKey privateKey = (PrivateKey) getKeystore().getKey(keyAlias, DEFAULT_KEYSTORE_PASSWORD.toCharArray());
+		PrivateKey privateKey = (PrivateKey) getKeystore().getKey(keyAlias, KEYSTORE_PASSWORD.toCharArray());
 		if (privateKey == null) {
 			throw new Exception("cannot find private key for alias: " + keyAlias);
 		}
 		return privateKey;
 	}
 
-	private KeyStore getKeystore() throws Exception {
+	public KeyStore getKeystore() throws Exception {
 		if(keystore == null){
 			if(!keystoreExists()){
 				createDefaultKeyStore();
 			}
-			System.out.println("Loading keystore ...");
-			FileInputStream is = new FileInputStream(DEFAULT_KEYSTORE_FILE);
-			keystore = KeyStore.getInstance(DEFAULT_KEYSTORE_TYPE, PROVIDER);
-			keystore.load(is, DEFAULT_KEYSTORE_PASSWORD.toCharArray());
+			System.out.println("Loading keystore: "+KEYSTORE_FILE);
+			System.out.println("Keystore type: "+KEYSTORE_TYPE);
+			FileInputStream is = new FileInputStream(KEYSTORE_FILE);
+			keystore = KeyStore.getInstance(KEYSTORE_TYPE, PROVIDER);
+			keystore.load(is, KEYSTORE_PASSWORD.toCharArray());
 		}
 		return keystore;
 	}
 	
+	private void createDefaultKeyStore() {
+		// TODO copy keystore to right place
+		
+	}
+
 	private boolean keystoreExists(){
-		return new File(DEFAULT_KEYSTORE_FILE).exists();
+		return new File(KEYSTORE_FILE).exists();
 	}
 
 	private KeyPair createKeyPair() throws Exception {
@@ -119,6 +127,12 @@ public class KeystoreManager {
 		return keypair;
 	}
 
+	
+	
+	
+	
+	
+	
 	//LEIAME .............................................................................................
 	//TODO rever isso ... qdo/como sera criado. 
 	// Provavelmente sera um keystore pre-gerado e que ja vai por default com a aplicacao
@@ -127,21 +141,21 @@ public class KeystoreManager {
 	// O keystore padrao sera tanto truststore (tem q adicionar os certificados padrao do cacerts, do java)
 	// quanto keystore de clientes. Isso so para facilitar a implementacao, mas podemos deixar separado 
 	// para facilitar a organizacao (mas aumenta a complexidade da impl)
-	public void createDefaultKeyStore() throws Exception {
+	/*public void createDefaultKeyStore() throws Exception {
 		System.out.println("Creating default keystore ...");
 		KeyPair keyPair = createKeyPair();
 		PublicKey publicKey = keyPair.getPublic();
 		PrivateKey privateKey = keyPair.getPrivate();
-		Certificate trustCert = createCertificate(DEFAULT_DN, DEFAULT_DN, publicKey, privateKey);
+		Certificate trustCert = createCertificate(ROOT_DN, ROOT_DN, publicKey, privateKey);
 		//Certificate[] outChain = { createCertificate("CN=xxxxx@xxx.xx", DEFAULT_DN, publicKey, privateKey), trustCert };
 		Certificate[] outChain = { trustCert };
 
 		System.out.println("Writing keystore ...");
-		KeyStore outStore = KeyStore.getInstance(DEFAULT_KEYSTORE_TYPE, PROVIDER);
-		outStore.load(null, DEFAULT_KEYSTORE_PASSWORD.toCharArray());
-		outStore.setKeyEntry(DEFAULT_KEYSTORE_ALIAS, privateKey, DEFAULT_KEYSTORE_PASSWORD.toCharArray(), outChain);
-		OutputStream outputStream = new FileOutputStream(DEFAULT_KEYSTORE_FILE);
-		outStore.store(outputStream, DEFAULT_KEYSTORE_PASSWORD.toCharArray());
+		KeyStore outStore = KeyStore.getInstance(KEYSTORE_TYPE, PROVIDER);
+		outStore.load(null, KEYSTORE_PASSWORD.toCharArray());
+		outStore.setKeyEntry(ROOT_ALIAS, privateKey, KEYSTORE_PASSWORD.toCharArray(), outChain);
+		OutputStream outputStream = new FileOutputStream(KEYSTORE_FILE);
+		outStore.store(outputStream, KEYSTORE_PASSWORD.toCharArray());
 		outputStream.flush();
 		outputStream.close();
 		System.out.println("Done!");
@@ -159,10 +173,21 @@ public class KeystoreManager {
 		certGenerator.setNotBefore(Calendar.getInstance().getTime());
 		certGenerator.setNotAfter(Calendar.getInstance().getTime());
 		certGenerator.setPublicKey(publicKey);
-		certGenerator.setSignatureAlgorithm("SHA1withRSA");
+		//certGenerator.setSignatureAlgorithm("SHA1withRSA");
+		certGenerator.setSignatureAlgorithm("SHA1WithRSAEncryption");
+		
 		X509Certificate certificate = (X509Certificate) certGenerator.generate(privateKey, PROVIDER);
 		System.out.println("Certificate created!");
 		return certificate;
-	}
-
+	}*/
+/*
+	
+	private KeyStore loadDefaultCacerts() throws Exception{
+		KeyStore caCerts = KeyStore.getInstance("JKS");
+        String javaHome = System.getProperty("java.home");
+        caCerts.load(
+                new FileInputStream(javaHome + "/lib/security/cacerts"),
+                "changeit".toCharArray());
+        return caCerts;
+	}*/
 }

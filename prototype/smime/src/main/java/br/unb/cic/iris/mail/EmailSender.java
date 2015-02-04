@@ -1,7 +1,6 @@
-package br.unb.cic.iris.security;
+package br.unb.cic.iris.mail;
 
-import static br.unb.cic.iris.security.MainApp.*;
-import static br.unb.cic.iris.security.MainApp.username;
+import static br.unb.cic.iris.MainApp.*;
 
 import java.util.Properties;
 
@@ -14,9 +13,6 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
 public class EmailSender {
-	final String smtpServer = "smtp.gmail.com";
-	final int smtpPort = 587;
-
 	private Session session;
 
 	public void sendMessage(String to, String subject, String body) throws Exception {
@@ -39,14 +35,14 @@ public class EmailSender {
 		Properties props = new Properties();
 		props.put("mail.smtp.auth", "true");
 		props.put("mail.smtp.starttls.enable", "true");
-		props.put("mail.smtp.host", smtpServer);
-		props.put("mail.smtp.port", smtpPort);
+		props.put("mail.smtp.host", "smtp.gmail.com");
+		props.put("mail.smtp.port", 587);
 		System.out.println("PROPERTIES: "+props.toString());
 		return props;
 	}
 
 	protected MimeMessage createMessage(String to, String subject, String body) throws Exception {
-		System.out.println("Creating message to: "+to);
+		System.out.println("Creating message to: "+to+"; subject="+subject);
 		MimeMessage message = new MimeMessage(getSession());
 		message.setFrom(new InternetAddress(username));
 		message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to));

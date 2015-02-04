@@ -1,7 +1,6 @@
-package br.unb.cic.iris.security;
+package br.unb.cic.iris.mail;
 
-import static br.unb.cic.iris.security.KeystoreManager.DEFAULT_KEYSTORE_ALIAS;
-import static br.unb.cic.iris.security.KeystoreManager.PROVIDER;
+import br.unb.cic.iris.security.KeystoreManager;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -36,25 +35,14 @@ import org.bouncycastle.mail.smime.SMIMESignedGenerator;
 import org.bouncycastle.util.Store;
 import org.bouncycastle.util.Strings;
 
-/* Procedimento para criar o keystore na mao, caso necessario
- * https://www.sslshopper.com/article-most-common-java-keytool-keystore-commands.html
- * 
- * to generate keystore and key pair (inside USER_HOME/.iris/):
- * 
- * CREATE:
- * keytool -genkey -alias iris -keystore iris_keystore.pfx -storepass 123456 -validity 365 -keyalg RSA -keysize 2048 -storetype pkcs12
- * 
- * LIST:
- * keytool -list -keystore iris_keystore.pfx -storetype pkcs12
- */
 public class EmailSenderSmime extends EmailSender {
 	private KeystoreManager manager;
 
 	//TODO temporario ... tem q pegar o email do usr q esta usando a app (enviando email)
-	String keyAlias = DEFAULT_KEYSTORE_ALIAS;
+	String keyAlias = KeystoreManager.ROOT_ALIAS;
 
 	public EmailSenderSmime() {
-		manager = new KeystoreManager();
+		manager = KeystoreManager.instance();
 
 		MailcapCommandMap mailcap = (MailcapCommandMap) CommandMap.getDefaultCommandMap();
 		mailcap.addMailcap("application/pkcs7-signature;; x-java-content-handler=org.bouncycastle.mail.smime.handlers.pkcs7_signature");
@@ -84,6 +72,10 @@ public class EmailSenderSmime extends EmailSender {
 
 		/* return message ready to be sent */
 		return encryptedMessage;
+		
+		//TODO rever a ordem das acoes sobre as mensagens, segui o link:
+		//http://grepcode.com/file/repo1.maven.org/maven2/org.bouncycastle/bcmail-jdk16/1.46/org/bouncycastle/mail/smime/examples/SendSignedAndEncryptedMail.java?av=f
+		//mas para mim seria: body C encrypted C signed (C==esta contido)... ai na outra ponta o cliente validaria a assinatura antes de decriptar 
 	}
 
 	private MimeMessage signMessage(MimeMessage body, Certificate[] chain, Enumeration headers) throws Exception {
@@ -103,9 +95,11 @@ public class EmailSenderSmime extends EmailSender {
 		attributes.add(new SMIMECapabilitiesAttribute(capabilities));
 
 		SMIMESignedGenerator signer = new SMIMESignedGenerator();
-		signer.addSignerInfoGenerator(new JcaSimpleSignerInfoGeneratorBuilder().setProvider(PROVIDER).setSignedAttributeGenerator(new AttributeTable(attributes))
-				.build("DSA".equals(privateKey.getAlgorithm()) ? "SHA1withDSA" : "MD5withRSA", privateKey, (X509Certificate) chain[0]));
-
+		//signer.addSignerInfoGenerator(new JcaSimpleSignerInfoGeneratorBuilder().setProvider(PROVIDER).setSignedAttributeGenerator(new AttributeTable(attributes))
+		//		.build("DSA".equals(privateKey.getAlgorithm()) ? "SHA1withDSA" : "MD5withRSA", privateKey, (X509Certificate) chain[0]));
+		signer.addSignerInfoGenerator(new JcaSimpleSignerInfoGeneratorBuilder().setProvider(KeystoreManager.PROVIDER).setSignedAttributeGenerator(new AttributeTable(attributes))
+				.build("SHA1WithRSAEncryption", privateKey, (X509Certificate) chain[0]));
+		
 		/* Add the list of certs to the generator */
 		List certList = new ArrayList();
 		certList.add(chain[0]);
@@ -113,7 +107,7 @@ public class EmailSenderSmime extends EmailSender {
 		signer.addCertificates(certs);
 
 		/* Sign the message */
-		MimeMultipart mm = signer.generate(body, PROVIDER);
+		MimeMultipart mm = signer.generate(body, KeystoreManager.PROVIDER);
 		MimeMessage signedMessage = new MimeMessage(getSession());
 
 		/* Set all original MIME headers in the signed message */
@@ -132,10 +126,10 @@ public class EmailSenderSmime extends EmailSender {
 		System.out.println("Encrypting message ...");
 		/* Create the encrypter */
 		SMIMEEnvelopedGenerator encrypter = new SMIMEEnvelopedGenerator();
-		encrypter.addRecipientInfoGenerator(new JceKeyTransRecipientInfoGenerator((X509Certificate) chain[0]).setProvider(PROVIDER));
+		encrypter.addRecipientInfoGenerator(new JceKeyTransRecipientInfoGenerator((X509Certificate) chain[0]).setProvider(KeystoreManager.PROVIDER));
 
 		/* Encrypt the message */
-		MimeBodyPart encryptedPart = encrypter.generate(message, new JceCMSContentEncryptorBuilder(CMSAlgorithm.RC2_CBC).setProvider(PROVIDER).build());
+		MimeBodyPart encryptedPart = encrypter.generate(message, new JceCMSContentEncryptorBuilder(CMSAlgorithm.RC2_CBC).setProvider(KeystoreManager.PROVIDER).build());
 
 		/*
 		 * Create a new MimeMessage that contains the encrypted and signed content
