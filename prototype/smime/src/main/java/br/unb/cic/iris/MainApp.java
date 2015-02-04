@@ -8,11 +8,11 @@ import br.unb.cic.iris.mail.EmailSender;
 import br.unb.cic.iris.mail.EmailSenderSmime;
 
 public class MainApp {
-	public static final String username = "canarioc@gmail.com";
-	public static final String password = "capoeirarte";
+	public static final String username = "xxx@gmail.com";
+	public static final String password = "xxx";
 	
-	public static final String TO = "br.unb.cic.iris@gmail.com";
-	public static final String TO_PASS = "mitologia";
+	public static final String TO = "xxx@gmail.com";
+	public static final String TO_PASS = "xxx";
 	
 	public static void main(String[] args) {
 		System.out.println("Executing ...");
