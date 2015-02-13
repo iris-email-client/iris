@@ -5,6 +5,7 @@ import java.util.Date;
 
 import br.unb.cic.iris.mail.EmailReader;
 import br.unb.cic.iris.mail.EmailSender;
+import br.unb.cic.iris.mail.EmailSenderPgp;
 import br.unb.cic.iris.mail.EmailSenderSmime;
 
 public class MainApp {
@@ -20,14 +21,15 @@ public class MainApp {
 		SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 		
 		//EmailSender sender = new EmailSender();
-		EmailSender sender = new EmailSenderSmime();
+		//EmailSender sender = new EmailSenderSmime();
+		EmailSender sender = new EmailSenderPgp();
 		EmailReader reader = new EmailReader();
 		
-		int x = 3;
+		int x = 2;
 		try {
 			for(int i=0; i < x; i++){
 				String date = sdf.format(new Date());
-				String subject = "encriptado e assinado - "+date;
+				String subject = "encriptado - "+date;
 				String body = "BODY ENCRYPTED AND SIGNED ... teste123 ... \n"+date;
 				sender.sendMessage(TO, subject, body);
 				System.out.println("\n");

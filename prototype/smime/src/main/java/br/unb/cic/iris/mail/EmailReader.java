@@ -1,5 +1,8 @@
 package br.unb.cic.iris.mail;
 
+import static br.unb.cic.iris.MainApp.password;
+import static br.unb.cic.iris.MainApp.username;
+
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,6 +21,7 @@ import javax.mail.Folder;
 import javax.mail.Message;
 import javax.mail.MessagingException;
 import javax.mail.Multipart;
+import javax.mail.PasswordAuthentication;
 import javax.mail.Session;
 import javax.mail.Store;
 import javax.mail.internet.MimeBodyPart;
@@ -38,6 +42,7 @@ import org.bouncycastle.mail.smime.SMIMESigned;
 import org.bouncycastle.mail.smime.SMIMEUtil;
 
 import br.unb.cic.iris.security.KeystoreManager;
+import br.unb.cic.iris.security.PgpManager;
 
 import com.sun.mail.util.BASE64DecoderStream;
 
@@ -47,6 +52,7 @@ public class EmailReader {
 	 * [Gmail]/Spam Messages marked as spam. [Gmail]/Starred Starred messages. [Gmail]/Trash Messages deleted from Gmail.
 	 */
 	public static final String INBOX = "Inbox";
+	public static final String PGP_MSG="-----BEGIN PGP MESSAGE-----";
 
 	Message message;
 	Session session;
@@ -55,11 +61,17 @@ public class EmailReader {
 		Properties props = System.getProperties();
 		props.setProperty("mail.store.protocol", "imaps");
 		session = Session.getDefaultInstance(props, null);
-		// session.setDebug(true);
+		/*session = Session.getInstance(props, new javax.mail.Authenticator() {
+			protected PasswordAuthentication getPasswordAuthentication() {
+				return new PasswordAuthentication(username, password);
+			}
+		});*/
+		//session.setDebug(true);
 		Store store = session.getStore("imaps");
 		store.connect("imap.gmail.com", user, password);
 		return store;
 	}
+	
 
 	public void showMessages(String user, String password, String folderName, int x) throws Exception {
 		Store store = connect(user, password);
@@ -95,7 +107,7 @@ public class EmailReader {
 
 	private void showMessage(Message msg) throws Exception {
 		try {
-			System.out.println("\n\nMESSAGE #" + (msg.getMessageNumber()) + ":" + getMimeType(msg.getContentType()) + " ----" + msg.getClass() + " ---- content="
+			System.out.println("\n\nMESSAGE #" + (msg.getMessageNumber()) + ":" + getMimeType(msg.getContentType()) + " ---- msg.getContentType()="+msg.getContentType()+" --- " + msg.getClass() + " ---- content="
 					+ msg.getContent().getClass());
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -110,8 +122,8 @@ public class EmailReader {
 	}
 
 	protected void showMessage(Object content) throws Exception {
-		//System.out.println("Showing message: Object");
-		//System.out.println("clazz=" + getClass());
+		System.out.println("Showing message: Object");
+		System.out.println("clazz=" + getClass());
 		try {
 			Method method = getClass().getDeclaredMethod("showMessage", content.getClass());
 			method.invoke(this, content);
@@ -138,7 +150,18 @@ public class EmailReader {
 
 	protected void showMessage(String msg) {
 		System.out.println("Showing message: String");
-		System.out.println(msg);
+		
+		if(msg.trim().startsWith(PGP_MSG)){
+			System.out.println("PGP message ....................");
+			try {
+				System.out.println(PgpManager.decrypt(msg));
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}else{
+			System.out.println(msg);
+		}
 	}
 
 	protected void showMessage(BASE64DecoderStream msg) throws Exception {
@@ -157,6 +180,18 @@ public class EmailReader {
 		System.out.println("------------- END -------------\n\n");
 	}
 
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	private MimeMultipart decrypt(String keyAlias, InputStream stream) throws Exception {
 		KeystoreManager manager = KeystoreManager.instance();
 		X509Certificate cert = (X509Certificate) manager.getKeystore().getCertificate(keyAlias);
@@ -268,16 +303,4 @@ public class EmailReader {
 		return from;
 	}
 	
-	
-	public static void main(String[] args) {
-		String user = "xxx@gmail.com";
-		String password = "xxx";
-		String folderName = INBOX;
-		System.out.println("main .........");
-		try {
-			new EmailReader().showMessages(user, password, folderName, 2);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
 }

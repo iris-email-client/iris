@@ -13,11 +13,57 @@
 			<artifactId>mail</artifactId>
 			<version>1.4.7</version>
 		</dependency>
-		<!-- bouncy castle mail -->
+		<!-- bouncy castle mail (smime) -->
 		<dependency>
 			<groupId>org.bouncycastle</groupId>
 			<artifactId>bcmail-jdk16</artifactId>
 			<version>1.46</version>
 		</dependency>
+		<!-- PGP -->
+		<dependency>
+			<groupId>org.bouncycastle</groupId>
+			<artifactId>bcprov-jdk15on</artifactId>
+			<version>1.51</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bouncycastle</groupId>
+			<artifactId>bcprov-ext-jdk15on</artifactId>
+			<version>1.51</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bouncycastle</groupId>
+			<artifactId>bcpg-jdk15on</artifactId>
+			<version>1.51</version>
+		</dependency>
 	</dependencies>
+	
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.2</version>
+				<configuration>
+					<encoding>UTF-8</encoding>
+					<source>1.7</source>
+					<target>1.7</target>
+					<optimize>true</optimize>
+					<showDeprecation>false</showDeprecation>
+					<showWarnings>false</showWarnings>
+					<verbose>false</verbose>
+					<debug>false</debug>
+					<!-- <compilerArgument>-Xlint:cast,unchecked,fallthrough,finally,serial</compilerArgument> 
+						<staleMillis>10</staleMillis> -->
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+	<!-- <repositories> <repository> <id>bouncy-castle-repo</id> <url>http://repo2.maven.org/maven2/</url> 
+		</repository> <repository> <id>official-repo</id> <name>The official maven 
+		repo</name> <url>http://repo1.maven.org/maven2/</url> </repository> <repository> 
+		<id>java-net-repo</id> <name>The java.net maven repo</name> <url>http://repo1.maven.org/maven2-repoclean-java.net/</url> 
+		</repository> <repository> <id>jboss-repo</id> <name>The JBoss maven repo</name> 
+		<url>http://repository.jboss.org/maven2/</url> </repository> <repository> 
+		<id>CodeHaus_Repo</id> <name>CodeHaus Repository</name> <url>http://repository.codehaus.org/</url> 
+		</repository> </repositories> -->
 </project>
