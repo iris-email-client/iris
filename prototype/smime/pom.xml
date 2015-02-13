@@ -35,6 +35,18 @@
 			<artifactId>bcpg-jdk15on</artifactId>
 			<version>1.51</version>
 		</dependency>
+		
+		<dependency>
+	<groupId>org.apache.httpcomponents</groupId>
+	<artifactId>httpclient</artifactId>
+	<version>4.4</version>
+</dependency>
+		<dependency>
+	<groupId>net.sf.jtidy</groupId>
+	<artifactId>jtidy</artifactId>
+	<version>r938</version>
+</dependency>
+		
 	</dependencies>
 	
 	<build>

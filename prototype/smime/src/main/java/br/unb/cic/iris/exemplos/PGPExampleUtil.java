@@ -23,7 +23,7 @@ import org.bouncycastle.openpgp.PGPUtil;
 import org.bouncycastle.openpgp.operator.jcajce.JcaKeyFingerprintCalculator;
 import org.bouncycastle.openpgp.operator.jcajce.JcePBESecretKeyDecryptorBuilder;
 
-class PGPExampleUtil
+public class PGPExampleUtil
 {
     static byte[] compressFile(String fileName, int algorithm) throws IOException
     {
@@ -59,7 +59,7 @@ class PGPExampleUtil
         return pgpSecKey.extractPrivateKey(new JcePBESecretKeyDecryptorBuilder().setProvider("BC").build(pass));
     }
 
-    static PGPPublicKey readPublicKey(String fileName) throws IOException, PGPException
+    public static PGPPublicKey readPublicKey(String fileName) throws IOException, PGPException
     {
         InputStream keyIn = new BufferedInputStream(new FileInputStream(fileName));
         PGPPublicKey pubKey = readPublicKey(keyIn);
@@ -76,7 +76,7 @@ class PGPExampleUtil
      * @throws IOException
      * @throws PGPException
      */
-    static PGPPublicKey readPublicKey(InputStream input) throws IOException, PGPException
+    public static PGPPublicKey readPublicKey(InputStream input) throws IOException, PGPException
     {
         PGPPublicKeyRingCollection pgpPub = new PGPPublicKeyRingCollection(
             PGPUtil.getDecoderStream(input), new JcaKeyFingerprintCalculator());

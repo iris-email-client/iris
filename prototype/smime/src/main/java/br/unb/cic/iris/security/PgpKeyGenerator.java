@@ -28,10 +28,10 @@ import org.bouncycastle.openpgp.operator.jcajce.JcaPGPKeyPair;
 import org.bouncycastle.openpgp.operator.jcajce.JcePBESecretKeyEncryptorBuilder;
 
 public class PgpKeyGenerator {
-
-	public void generateKeys(String identity, char[] passPhrase) throws Exception {
-		FileOutputStream secret = new FileOutputStream(FILE_PRIVATE);
-		FileOutputStream pub = new FileOutputStream(FILE_PUBLIC);
+	
+	public void generateKeys(String identity, char[] passPhrase, String filePrivate, String filePublic) throws Exception {
+		FileOutputStream secret = new FileOutputStream(filePrivate);
+		FileOutputStream pub = new FileOutputStream(filePublic);
 
 		Security.addProvider(new BouncyCastleProvider());
 
@@ -42,6 +42,10 @@ public class PgpKeyGenerator {
 		KeyPair kp = kpg.generateKeyPair();
 
 		exportKeyPair(secret, pub, kp, identity, passPhrase, true);
+	}
+
+	public void generateKeys(String identity, char[] passPhrase) throws Exception {
+		generateKeys(identity, passPhrase, FILE_PRIVATE, FILE_PUBLIC);
 	}
 
 	private static void exportKeyPair(OutputStream secretOut, OutputStream publicOut, KeyPair pair, String identity, char[] passPhrase, boolean armor) throws Exception {
@@ -70,7 +74,7 @@ public class PgpKeyGenerator {
 	}
 
 	public static void main(String[] args) throws Exception {
-		String identity = "canarioc@gmail.com";
+		String identity = "xxx@gmail.com";
 		String passPhrase = "12345678";
 		new PgpKeyGenerator().generateKeys(identity, passPhrase.toCharArray());
 	}
