@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+  <classpathentry kind="src" path="src/main/java" including="**/*.java"/>
+  <classpathentry kind="src" path="src/main/resources" excluding="**/*.java"/>
+  <classpathentry kind="output" path="target/classes"/>
+  <classpathentry kind="var" path="M2_REPO/javax/mail/mail/1.4.7/mail-1.4.7.jar"/>
+  <classpathentry kind="var" path="M2_REPO/javax/activation/activation/1.1/activation-1.1.jar"/>
+  <classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+  <classpathentry kind="var" path="M2_REPO/net/suberic/crypto/javamail-crypto/1.0/javamail-crypto-1.0.jar"/>
+  <classpathentry kind="var" path="M2_REPO/net/suberic/crypto/javamail-crypto-cryptix-openpgp/1.0/javamail-crypto-cryptix-openpgp-1.0.jar"/>
+  <classpathentry kind="var" path="M2_REPO/cryptix/cryptix-jce-provider/1.0/cryptix-jce-provider-1.0.jar"/>
+  <classpathentry kind="var" path="M2_REPO/cryptix/cryptix-message-api/1.0/cryptix-message-api-1.0.jar"/>
+  <classpathentry kind="var" path="M2_REPO/cryptix/cryptix-openpgp-provider/1.0/cryptix-openpgp-provider-1.0.jar"/>
+  <classpathentry kind="var" path="M2_REPO/cryptix/cryptix-pki-api/1.0/cryptix-pki-api-1.0.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/bouncycastle/bcprov-jdk15on/1.51/bcprov-jdk15on-1.51.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/bouncycastle/bcprov-ext-jdk15on/1.51/bcprov-ext-jdk15on-1.51.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/bouncycastle/bcpg-jdk15on/1.51/bcpg-jdk15on-1.51.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/httpcomponents/httpclient/4.4/httpclient-4.4.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/httpcomponents/httpcore/4.4/httpcore-4.4.jar"/>
+  <classpathentry kind="var" path="M2_REPO/commons-logging/commons-logging/1.2/commons-logging-1.2.jar" sourcepath="M2_REPO/commons-logging/commons-logging/1.2/commons-logging-1.2-sources.jar">
+    <attributes>
+      <attribute value="jar:file:/home/pedro/desenvolvimento/repositorio/m2/commons-logging/commons-logging/1.2/commons-logging-1.2-javadoc.jar!/" name="javadoc_location"/>
+    </attributes>
+  </classpathentry>
+  <classpathentry kind="var" path="M2_REPO/commons-codec/commons-codec/1.9/commons-codec-1.9.jar" sourcepath="M2_REPO/commons-codec/commons-codec/1.9/commons-codec-1.9-sources.jar">
+    <attributes>
+      <attribute value="jar:file:/home/pedro/desenvolvimento/repositorio/m2/commons-codec/commons-codec/1.9/commons-codec-1.9-javadoc.jar!/" name="javadoc_location"/>
+    </attributes>
+  </classpathentry>
+  <classpathentry kind="var" path="M2_REPO/net/sf/jtidy/jtidy/r938/jtidy-r938.jar"/>
+</classpath>

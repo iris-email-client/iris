@@ -1,0 +1,98 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>br.unb.cic.iris</groupId>
+	<artifactId>security</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>Prototipo PGP</name>
+	<properties>
+		<bouncycastle.version>1.51</bouncycastle.version>
+	</properties>
+	<dependencies>
+		<!-- javamail-crypto http://javamail-crypto.sourceforge.net/ -->
+		<dependency>
+			<groupId>net.suberic.crypto</groupId>
+			<artifactId>javamail-crypto</artifactId>
+			<version>1.0</version>
+		</dependency>
+		<dependency>
+			<groupId>net.suberic.crypto</groupId>
+		  	<artifactId>javamail-crypto-cryptix-openpgp</artifactId>
+		  	<version>1.0</version>
+		</dependency>
+		
+		<dependency>
+			<groupId>javax.mail</groupId>
+			<artifactId>mail</artifactId>
+			<version>1.4.7</version>
+		</dependency>
+		
+		<!--bouncy castle -->
+		<dependency>
+			<groupId>org.bouncycastle</groupId>
+			<artifactId>bcprov-jdk15on</artifactId>
+			<version>${bouncycastle.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bouncycastle</groupId>
+			<artifactId>bcprov-ext-jdk15on</artifactId>
+			<version>${bouncycastle.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bouncycastle</groupId>
+			<artifactId>bcpg-jdk15on</artifactId>
+			<version>${bouncycastle.version}</version>
+		</dependency>
+
+
+		<dependency>
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>httpclient</artifactId>
+			<version>4.4</version>
+		</dependency>
+		<dependency>
+			<groupId>net.sf.jtidy</groupId>
+			<artifactId>jtidy</artifactId>
+			<version>r938</version>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.2</version>
+				<configuration>
+					<encoding>UTF-8</encoding>
+					<source>1.7</source>
+					<target>1.7</target>
+					<optimize>true</optimize>
+					<showDeprecation>false</showDeprecation>
+					<showWarnings>false</showWarnings>
+					<verbose>false</verbose>
+					<debug>false</debug>
+					<!-- <compilerArgument>-Xlint:cast,unchecked,fallthrough,finally,serial</compilerArgument> 
+						<staleMillis>10</staleMillis> -->
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+	<repositories>
+		<repository>
+			<id>phtcosta</id>
+			<name>phtcosta</name>
+			<url>http://phtcosta.5gbfree.com/m2/</url>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</repository>
+		<repository>
+			<id>repo2</id>
+			<url>http://repo2.maven.org/maven2/</url>
+		</repository>
+	</repositories>
+</project>
