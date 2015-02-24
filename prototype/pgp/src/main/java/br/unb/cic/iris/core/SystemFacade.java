@@ -69,6 +69,10 @@ public final class SystemFacade {
 		verifyConnection();
 		return client.listFolders();
 	}
+	
+	public List<EmailMessage> readRemoteMessages() throws EmailException{
+		return client.getMessages(IrisFolder.INBOX);
+	}
 
 	public void downloadMessages(String folder) throws EmailException {
 		/*verifyConnection();
